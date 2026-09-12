@@ -55,8 +55,8 @@ jobs:
 
       - name: Configure git identity
         run: |
-          git config --global user.name "heybyben"
-          git config --global user.email "heybyben@gmail.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Set up upload credentials (GitHub token & org)
         working-directory: ${{ env.DUMPRX_DIR }}
