@@ -39,7 +39,7 @@ jobs:
 
       - name: Configure git identity
         run: |
-          git config --global user.name "meow"
+          git config --global user.name "Panjol-star"
           git config --global user.email "263357069+Panjol-star@users.noreply.github.com"
 
       - name: Set up upload credentials (GitHub token & org)
@@ -62,7 +62,44 @@ jobs:
           if [ -n "$TG_CHAT_SECRET" ]; then
             echo "$TG_CHAT_SECRET" > .tg_chat
           fi
+    
+      - name: Validate GitHub Token & Target Repository
+        working-directory: ${{ env.DUMPRX_DIR }}
+        env:
+          GH_TOKEN: ${{ secrets.DUMPER_GH_TOKEN }}
+          GH_ORG: ${{ secrets.DUMPER_GH_ORGNAME }}
+        run: |
+          echo "==> Checking GitHub Token validity..."
+          if [ -z "$GH_TOKEN" ]; then
+            echo "Error: DUMPER_GH_TOKEN secret is empty or not set!"
+            exit 1
+          fi
+          
+          # 1. Login & tes token
+          echo "$GH_TOKEN" | gh auth login --with-token
+          if ! gh auth status; then
+            echo "Error: GitHub token authentication failed!"
+            exit 1
+          fi
 
+          # 2. Tentukan target owner (Org name atau Username pemilik token)
+          if [ -n "$GH_ORG" ]; then
+            TARGET_OWNER="$GH_ORG"
+          else
+            TARGET_OWNER=$(gh api user -q '.login')
+          fi
+
+          echo "==> Checking target repository access under target: $TARGET_OWNER..."
+          
+          # Ambil nama repo dari firmware / dump target jika memungkinkan, 
+          # atau tes akses umum ke API repo owner
+          if gh api "users/$TARGET_OWNER" >/dev/null 2>&1 || gh api "orgs/$TARGET_OWNER" >/dev/null 2>&1; then
+            echo "Success: Target owner '$TARGET_OWNER' exists and token has access!"
+          else
+            echo "Error: Cannot access user/org '$TARGET_OWNER'. Check token permissions or DUMPER_GH_ORGNAME."
+            exit 1
+          fi
+          
       - name: Run the dumper
         working-directory: ${{ env.DUMPRX_DIR }}
         run: |
